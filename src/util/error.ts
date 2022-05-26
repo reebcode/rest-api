@@ -1,4 +1,5 @@
-export class BaseError extends Error {
+/* StatusError is a class that extends the Error class and adds a statusCode property to it. */
+export class StatusError extends Error {
     statusCode: number
 
     constructor(statusCode: number, message: string) {

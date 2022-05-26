@@ -1,8 +1,8 @@
-# Pokemon Name Analysis Rest API
+# Pokemon Name Analysis REST API
 
 ### Intro
 
-This rest API takes in the inputs of a first name and a favorite of the first 151 pokemon, and returns a JSON response with a combination of their name and the pokemons name, a paragraph of name analysis based on the first name, pokemon, and pokemon type, and creates an image with said information, which also has some stats based on each name.
+This REST API takes in the inputs of a first name and a favorite 1st generation pokemon's name, and returns a JSON response. This JSON response is a combination of their name and the pokemons name, a paragraph of name analysis based on the first name, pokemon, and pokemon type. The response also includes the path to a generated pokemon card image which includes the previous information as well stats such as health and attack. Inputs are not case-sensitive.
 
 ### Setup and Important Commands
 
@@ -39,7 +39,7 @@ GET = http://localhost:3000/YourCard.png
 
 ### The Response Data
 
-1. The following is an example of a successful POST and following GET request
+1. The following is an example of a successful POST and subsequent GET request using Postman.
 
 ```
 Response Data = { "statusCode":200, "data":{"mixedName": "Johnasaur", "para": "Johnasaur, bringing joy, they are a grass-type creature, loves the outdoors, terrified of lawnmowers.", img": "YourCard.png" } }

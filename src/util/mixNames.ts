@@ -2,16 +2,25 @@ import pokemons = require('../dbs/pokedex.json')
 import paragraphs = require('../dbs/paragraphs.json')
 import { CanvasRenderingContext2D, loadImage } from 'canvas'
 import fs from 'fs'
-import { BaseError } from './error'
+import { StatusError } from './error'
 const { readFile } = require('fs/promises')
 
+/**
+ * Takes, in a JSON object, processes it, and returns a JSON object with a string, a paragraph, and a link to an image.
+ * @param {any} data - The data that is passed in from the API.
+ * @returns an object with the following properties:
+ * mixedName: The mixed name of the user and their favorite pokemon.
+ * para: The paragraph that is generated based on the user's name and favorite pokemon.
+ * img: The path to the image that is generated based on the user's name and favorite pokemon.
+ */
 export function processData(data: any) {
     data = JSON.stringify(data)
-    //Check for dash
+    //Check for dash (proper input)
     if (data.indexOf('-') == -1) {
-        const inputError = new BaseError(400, 'Dash not found, an example input is {"data": "john-Bulbasaur"}')
+        const inputError = new StatusError(400, 'Dash not found, an example input is {"data": "john-Bulbasaur"}')
         throw inputError
     }
+    //Find dash index
     let dashPoint = 0
     for (let i = 0; i < data.length; i++) {
         if (data.charAt(i) == '-') {
@@ -19,9 +28,13 @@ export function processData(data: any) {
             break
         }
     }
+
+    //Variables
     let firstName: string = ''
     let favPoke: string = ''
     let mixedName: string = ''
+
+    /* Setting the first name, favorite pokemon, and mixed name. Input validity error check present*/
     try {
         //set firstname
         firstName = data.substr(9, dashPoint - 9).toLowerCase()
@@ -44,41 +57,53 @@ export function processData(data: any) {
             mixedName += favPoke.substring(favPoke.length - 3, favPoke.length)
         }
     } catch (e) {
-        const inputError = new BaseError(400, 'Input is not valid. May not be a string or is incomplete. Example input: {"data": "john-Bulbasaur"}')
+        const inputError = new StatusError(400, 'Input is not valid. May not be a string or is incomplete. Example input: {"data": "john-Bulbasaur"}')
         throw inputError
     }
 
-    //Get pokemon type & number
+    /**
+     * Checking if the pokemon exists in the pokedex.json file, save json to poke if true.
+     * Then get type and save type to @param { string } pokeType - Pokemon type, used to get paragraph
+     * Get and save pokemon number to @param { number } pokeNum - Pokemon number, used to get stats later
+     */
     let poke = pokemons.find((poke) => poke.name.english === favPoke)
     //Check Validity of Pokemon
     if (poke == undefined) {
-        const pokeError = new BaseError(400, 'Favpoke undefined, perhaps the inputted pokemon does not exist?')
+        const pokeError = new StatusError(400, 'Favpoke undefined, perhaps the inputted pokemon does not exist?')
         throw pokeError
     }
     let pokeNum
     let pokeType
+    //Get type and pokemon number
     if (poke) {
         pokeType = poke.type[0].toLowerCase()
         pokeNum = poke.id
     }
-    //Get appropriate paragraphs
-    //Name Paragraph
+
+    /**
+     * Checking if the letter (first letter of first name) exists in the paragraphs.json file.
+     * If true saves to @param { string } namePara - Name Paragraph
+     */
     let letter = firstName.substring(0, 1)
     type Key = keyof typeof paragraphs.letters
     let keyVal = letter as Key
     let namePara = paragraphs.letters[keyVal]
     if (namePara == undefined) {
-        const nameError = new BaseError(400, 'nameError, inputted name is likely not valid.')
+        const nameError = new StatusError(400, 'nameError, inputted name is likely not valid.')
         throw nameError
     }
 
-    //Pokemon Type Paragraph
+    /**
+     * Checking if pokeType - found above, exists in the paragraphs.json file.
+     * If true saves to @param { string } pokePara - Poke Paragraph
+     */
     type pokeKey = keyof typeof paragraphs.types
     let pokeKeyVal = pokeType as pokeKey
     let pokePara = paragraphs.types[pokeKeyVal]
 
     //Mix together name, name para next, then the trait paragraph (pokepara)
     let para = mixedName + ', ' + namePara + ' ' + pokePara
+
     //Pokemon stats for image
     let vary = firstName.length
     let stats: string[] = [
@@ -100,6 +125,23 @@ export function processData(data: any) {
         img: './YourCard.png',
     }
 }
+
+/**
+ * Takes the pokemon number, type, the mixed name, first name, name paragraph, pokeparagraph, and an array of stats, and
+ * then it creates a card with the given information.
+ * @param {number} pokeNum - number, pokeType: string, mixed: string, firstName: string, namePara:
+ * string, pokePara: string, stats: string[]
+ * @param {string} pokeType - string, mixed: string, firstName: string, namePara: string, pokePara:
+ * string, stats: string[]
+ * @param {string} mixed - string, firstName: string, namePara: string, pokePara: string, stats:
+ * string[]
+ * @param {string} firstName - string, namePara: string, pokePara: string, stats: string[]
+ * @param {string} namePara - string, pokePara: string, stats: string[]
+ * @param {string} pokePara - string, stats: string[], pokeType: string, pokeNum: number, mixed:
+ * string, firstName: string, namePara: string
+ * @param {string[]} stats - string[] = ['HP: ' + hp, 'Attack: ' + attack, 'Defense: ' + defense, 'Sp.
+ * Atk: ' + spAtk, 'Sp. Def: ' + spDef, 'Speed: ' + speed]
+ */
 
 async function createCard(pokeNum: number, pokeType: string, mixed: string, firstName: string, namePara: string, pokePara: string, stats: string[]) {
     try {
@@ -142,7 +184,7 @@ async function createCard(pokeNum: number, pokeType: string, mixed: string, firs
         const buffer = canvas.toBuffer()
         fs.writeFileSync('./YourCard.png', buffer)
     } catch (e) {
-        const nameError = new BaseError(400, 'nameError, inputted name is likely not valid.')
+        const nameError = new StatusError(400, 'nameError, inputted name is likely not valid.')
         throw nameError
     }
 }
